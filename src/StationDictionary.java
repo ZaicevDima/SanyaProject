@@ -5,7 +5,7 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 public class StationDictionary {
-    private InputStream in;
+    private final InputStream in;
 
     StationDictionary(InputStream in) {
         this.in = in;
@@ -21,6 +21,7 @@ public class StationDictionary {
                     Double.parseDouble(splittingLine[1]),
                     Double.parseDouble(splittingLine[2]))));
         }
+        reader.close();
 
         return stationDictionary;
     }

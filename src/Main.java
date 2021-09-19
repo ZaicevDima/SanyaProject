@@ -8,8 +8,8 @@ public class Main {
         InputStream in = Files.newInputStream(Path.of("resources\\ghcnd-stations.txt"));
         StationDictionary dictionary = new StationDictionary(in);
         Map<String, List<Double>> stationDictionary = dictionary.getStationDictionary();
-
-        //System.out.println(stationDictionary.size());
+        in.close();
+        System.out.println(stationDictionary.size());
     }
 
 }
