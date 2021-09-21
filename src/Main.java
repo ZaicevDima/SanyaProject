@@ -8,13 +8,13 @@ public class Main {
         InputStream stationInput = Files.newInputStream(Path.of("resources\\ghcnd-stations.txt"));
         InputStream in = Files.newInputStream(Path.of("resources\\090112XA.ngs"));
 
-        //StationDictionary dictionary = new StationDictionary(stationInput);
-        //Map<String, List<Double>> stationDictionary = dictionary.getStationDictionary();
-        //stationInput.close();
-        //System.out.println(stationDictionary.size());
+        StationDictionary dictionary = new StationDictionary(stationInput);
+        Map<String, List<Double>> stationDictionary = dictionary.getStationDictionary();
+        stationInput.close();
+        System.out.println(stationDictionary.size());
 
         NGSParser parser = new NGSParser(in);
-        parser.fixNGSFile();
+        parser.fixNGSFile(stationDictionary);
         in.close();
     }
 

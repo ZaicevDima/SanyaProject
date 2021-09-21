@@ -12,11 +12,11 @@ public class NGSParser {
         this.in = in;
     }
 
-    public void fixNGSFile() throws IOException {
+    public void fixNGSFile(Map<String, List<Double>> stationDictionary) throws IOException {
         int counterEndMarker = 0;
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         String tmp = "";
-        getStationCoord(reader); //odin "$END" zdes'
+        Map<String, List<Double>> mapOfStationCoord = getStationCoord(reader); //odin "$END" zdes'
 
         while (counterEndMarker != 2 && (tmp = reader.readLine()) != null) {
             if (tmp.equals("$END")) {
@@ -25,7 +25,7 @@ public class NGSParser {
             }
         }
 
-        fixIncorrectLine(reader);
+        fixIncorrectLine(reader, mapOfStationCoord, stationDictionary);
         //System.out.println(tmp);
         /*    if (counterEndMarker == 3) {
                 if (tmp.contains("-999.000") || tmp.contains("-99900.000")) { //regex
@@ -39,7 +39,7 @@ public class NGSParser {
     }
 
     //private fixLine()
-    private void fixIncorrectLine(BufferedReader reader) throws IOException {
+    private void fixIncorrectLine(BufferedReader reader, Map<String, List<Double>> mapOfStationCoord, Map<String, List<Double>> stationDictionary) throws IOException {
         int counterLines = 0;
 
         String lineWithStationName = "";
@@ -55,7 +55,7 @@ public class NGSParser {
             }
 
             //System.out.println(tmp);
-            String fix = fixLine(tmp, lineWithStationName);
+            String fix = fixLine(tmp, lineWithStationName, mapOfStationCoord, stationDictionary);
             if (counterLines == AMOUNT_LINES) {
                 counterLines = 0;
                 continue;
@@ -68,20 +68,51 @@ public class NGSParser {
 
     }
 
-    private String fixLine(String incorrectLine, String lineWithStationName) {
+    private String fixLine(String incorrectLine, String lineWithStationName, Map<String, List<Double>> mapOfStationCoord, Map<String, List<Double>> stationDictionary) {
         if (!(incorrectLine.contains("-999.000") || incorrectLine.contains("-99900.000"))) {
             return null;
         }
 
+        String dateOfCrash = getDateOfCrash(lineWithStationName);
+        System.out.println(dateOfCrash);
+
         int type = getTypeError(incorrectLine);
         List<String> nameStation = getNameStation(lineWithStationName, type);
         for (String s : nameStation) {
-            System.out.println(s);
+            List<Double> stationCoords = mapOfStationCoord.get(s);
+            System.out.println(s + " " + stationCoords);
+            String theNearestStation = getTheNearestStationInThatDay(stationCoords, dateOfCrash, stationDictionary);
+            System.out.println(theNearestStation + " " + stationDictionary.get(theNearestStation));
         }
 
         System.out.println("?????????");
 
+
         return "nameStation";
+    }
+
+    private String getTheNearestStationInThatDay(List<Double> stationCoords, String dateOfCrash, Map<String, List<Double>> stationDictionary) {
+
+        String theNearestStation = null;
+        Double distance = 99999999999999999.0;
+        for (Map.Entry<String, List<Double>> meteoStation : stationDictionary.entrySet()) {
+            Double tmpDistnce = getDistance(stationCoords, meteoStation.getValue());
+            if (tmpDistnce < distance) {
+                theNearestStation = meteoStation.getKey();
+                distance = tmpDistnce;
+            }
+        }
+        return theNearestStation;
+    }
+
+    private Double getDistance(List<Double> stationCoords, List<Double> meteoStationCoords) {
+        double deltaLat = Math.toRadians(meteoStationCoords.get(0) - stationCoords.get(0));
+        double deltaLon = Math.toRadians(meteoStationCoords.get(1) - stationCoords.get(1));
+
+        double angle = Math.pow(Math.sin(deltaLat/2), 2) + Math.pow(Math.sin(deltaLon/2) , 2)
+                * Math.cos(Math.toRadians(stationCoords.get(0))) * Math.cos((Math.toRadians(meteoStationCoords.get(0))));
+
+        return 2 * Math.atan2(Math.sqrt(angle), Math.sqrt(1-angle));
     }
 
     private int getTypeError(String incorrectLine) {
@@ -141,5 +172,10 @@ public class NGSParser {
         }
         System.out.println(mapStationCoord);
         return mapStationCoord;
+    }
+
+    private String getDateOfCrash(String lineWithStationName) {
+        String dateOfCrash = lineWithStationName.split("\s+")[3] + lineWithStationName.split("\s+")[4] + lineWithStationName.split("\s+")[5];
+        return dateOfCrash;
     }
 }
