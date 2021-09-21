@@ -16,8 +16,9 @@ public class NGSParser {
         int counterEndMarker = 0;
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         String tmp = "";
-        int lineNum = 1;
-        while (counterEndMarker != 3 && (tmp = reader.readLine()) != null) {
+        getStationCoord(reader); //odin "$END" zdes'
+
+        while (counterEndMarker != 2 && (tmp = reader.readLine()) != null) {
             if (tmp.equals("$END")) {
                 counterEndMarker++;
                 System.out.println(counterEndMarker);
@@ -44,7 +45,7 @@ public class NGSParser {
         String lineWithStationName = "";
         String tmp = "";
         //for (int i = 0; i < 5; i++) {
-            //lineWithStationName = reader.readLine();
+        //lineWithStationName = reader.readLine();
         while ((lineWithStationName = reader.readLine()) != null) {
             System.out.println(lineWithStationName);
             while (counterLines < AMOUNT_LINES && (tmp = reader.readLine()) != null
@@ -122,5 +123,23 @@ public class NGSParser {
         } else {
             return new ArrayList<>(Arrays.asList(lineWithStationName.split("\s+")[0], lineWithStationName.split("\s+")[1]));
         }
+    }
+
+    private Map<String, List<Double>> getStationCoord(BufferedReader reader) throws IOException {
+        reader.readLine();
+        reader.readLine();
+        //Now third stroka
+        String tmp = "";
+        Coords coords = new Coords();
+        Map<String, List<Double>> mapStationCoord = new HashMap<>();
+        while (((tmp = reader.readLine()) != null) && (!tmp.equals("$END"))) {
+            String[] stCoord = tmp.split("\s+");
+            List<Double> listCoord = new ArrayList<>();
+            listCoord.add(coords.getLat(Double.parseDouble(stCoord[1]), Double.parseDouble(stCoord[2]), Double.parseDouble(stCoord[3])));
+            listCoord.add(coords.getLon(Double.parseDouble(stCoord[1]), Double.parseDouble(stCoord[2]), Double.parseDouble(stCoord[3])));
+            mapStationCoord.put(stCoord[0], listCoord);
+        }
+        System.out.println(mapStationCoord);
+        return mapStationCoord;
     }
 }
