@@ -95,6 +95,8 @@ public class NGSParser {
 
         String theNearestStation = null;
         Double distance = 99999999999999999.0;
+        Map<String, StationProperty> stationPropertyMap = getStationPropertyMap();
+
         for (Map.Entry<String, List<Double>> meteoStation : stationDictionary.entrySet()) {
             Double tmpDistnce = getDistance(stationCoords, meteoStation.getValue());
             if (tmpDistnce < distance) {
@@ -103,6 +105,10 @@ public class NGSParser {
             }
         }
         return theNearestStation;
+    }
+
+    private Map<String, StationProperty> getStationPropertyMap() {
+        return null;
     }
 
     private Double getDistance(List<Double> stationCoords, List<Double> meteoStationCoords) {
@@ -177,5 +183,55 @@ public class NGSParser {
     private String getDateOfCrash(String lineWithStationName) {
         String dateOfCrash = lineWithStationName.split("\s+")[3] + lineWithStationName.split("\s+")[4] + lineWithStationName.split("\s+")[5];
         return dateOfCrash;
+    }
+
+    public Map<String, List<StationProperty>> getStationPropertyMap(InputStream in) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+        Map<String, List<StationProperty>> result = new HashMap<>();
+        String tmp = "";
+        while ((tmp = reader.readLine()) != null) {
+            String[] properties = tmp.split(",");
+            if (!result.containsKey(properties[1])) {
+                List<StationProperty> tmpList = new ArrayList<>();
+                StationProperty stationProperty = new StationProperty(properties[0]);
+                setStationProperty(stationProperty, properties[3], properties[4]);
+                tmpList.add(stationProperty);
+                result.put(properties[1], tmpList);
+            } else {
+                List<StationProperty> tmpList = result.get(properties[1]);
+                //boolean isContains = false;
+                StationProperty currentStationProperty = null;
+                //java stream api find
+                for (StationProperty stationProperty : tmpList) {
+                    if (stationProperty.getStationKey().equals(properties[0])) {
+                        //isContains = true;
+                        currentStationProperty = stationProperty;
+                        break;
+                    }
+                }
+
+                if (currentStationProperty == null) {
+                    StationProperty stationProperty = new StationProperty(properties[0]);
+                    setStationProperty(stationProperty, properties[3], properties[4]);
+                    tmpList.add(stationProperty);
+                    result.put(properties[1], tmpList);
+                } else {
+                    setStationProperty(currentStationProperty,  properties[3], properties[4]);
+                }
+            }
+        }
+
+        System.out.println(result);
+
+        return  result;
+    }
+
+    private void setStationProperty(StationProperty stationProperty, String property, String value) {
+        switch (property) {
+            case "TMIN" -> stationProperty.setTMIN(Double.parseDouble(value));
+            case "TMAX" -> stationProperty.setTMAX(Double.parseDouble(value));
+            case "TAVG" -> stationProperty.setTAVG(Double.parseDouble(value));
+        }
     }
 }
