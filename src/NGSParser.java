@@ -257,6 +257,10 @@ public class NGSParser {
         String t = "";
         while ((tmp = reader.readLine()) != null) {
             String[] properties = tmp.split(",");
+            if (!t.equals(properties[1])) {
+                t = properties[1];
+                tmpPropertyMap = new HashMap<>();
+            }
             if (!result.containsKey(properties[1])) {
                 StationProperty stationProperty = new StationProperty(properties[2], properties[3]);
                 tmpPropertyMap.put(properties[0], stationProperty);
@@ -276,10 +280,6 @@ public class NGSParser {
 
 
 
-            if (!t.equals(properties[1])) {
-                t = properties[1];
-                tmpPropertyMap.clear();
-            }
             //System.out.println(result);
         }
 
