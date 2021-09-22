@@ -1,28 +1,46 @@
 public class StationProperty {
-    private String stationKey;
-    private double TMIN;
-    private double TMAX;
-    private double TAVG;
+    public static final double invalidValue = -2750.0;
+    private double TMIN = invalidValue;
+    private double TMAX = invalidValue;
+    private double TAVG = invalidValue;
 
-    StationProperty(String stationKey) {
-        this.stationKey = stationKey;
+    StationProperty() {
     }
-
-    StationProperty(String stationKey, double TMIN, double TMAX, double TAVG) {
-        this.stationKey = stationKey;
-        this.TMAX = TMAX;
-        this.TMIN = TMIN;
-        this.TAVG = TAVG;
+    StationProperty(String property, String value) {
+        switch (property) {
+            case "TMIN" -> this.TMIN = Double.parseDouble(value);
+            case "TMAX" -> this.TMAX = Double.parseDouble(value);
+            case "TAVG" -> this.TAVG = Double.parseDouble(value);
+        }
     }
+//
+//
+//    public String getStationKey() {
+//        return stationKey;
+//    }
 
-    public String getStationKey() {
-        return stationKey;
+//    public void setStationKey(String stationKey) {
+//        this.stationKey = stationKey;
+//    }
+
+    static StationProperty createStationPropertyByTMIN(double TMIN) {
+        StationProperty property = new StationProperty();
+        property.setTMIN(TMIN);
+
+        return property;
     }
+    /*static StationProperty createStationPropertyByTMAX(double TMAX) {
+        StationProperty property = new StationProperty();
+        property.setTMIN(TMAX);
 
-    public void setStationKey(String stationKey) {
-        this.stationKey = stationKey;
+        return property;
     }
+    static StationProperty createStationPropertyByTAVG(double TAVG) {
+        StationProperty property = new StationProperty();
+        property.setTAVG(TAVG);
 
+        return property;
+    }*/
     public double getTMIN() {
         return TMIN;
     }
@@ -45,5 +63,9 @@ public class StationProperty {
 
     public void setTAVG(double TAVG) {
         this.TAVG = TAVG;
+    }
+
+    public String toString() {
+        return "[TMIN = " + TMIN + "; TMAX = " + TMAX + "; TAVG = " + TAVG + "]";
     }
 }

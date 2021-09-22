@@ -2,6 +2,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 public class NGSParser {
@@ -12,7 +16,7 @@ public class NGSParser {
         this.in = in;
     }
 
-    public void fixNGSFile(Map<String, List<Double>> stationDictionary) throws IOException {
+    public void fixNGSFile(Map<String, List<Double>> stationDictionary, Map<String, Map<String, StationProperty>> propertyMap) throws IOException {
         int counterEndMarker = 0;
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
         String tmp = "";
@@ -25,7 +29,7 @@ public class NGSParser {
             }
         }
 
-        fixIncorrectLine(reader, mapOfStationCoord, stationDictionary);
+        fixIncorrectLine(reader, mapOfStationCoord, stationDictionary, propertyMap);
         //System.out.println(tmp);
         /*    if (counterEndMarker == 3) {
                 if (tmp.contains("-999.000") || tmp.contains("-99900.000")) { //regex
@@ -39,7 +43,7 @@ public class NGSParser {
     }
 
     //private fixLine()
-    private void fixIncorrectLine(BufferedReader reader, Map<String, List<Double>> mapOfStationCoord, Map<String, List<Double>> stationDictionary) throws IOException {
+    private void fixIncorrectLine(BufferedReader reader, Map<String, List<Double>> mapOfStationCoord, Map<String, List<Double>> stationDictionary, Map<String, Map<String, StationProperty>> propertyMap) throws IOException {
         int counterLines = 0;
 
         String lineWithStationName = "";
@@ -55,7 +59,7 @@ public class NGSParser {
             }
 
             //System.out.println(tmp);
-            String fix = fixLine(tmp, lineWithStationName, mapOfStationCoord, stationDictionary);
+            String fix = fixLine(tmp, lineWithStationName, mapOfStationCoord, stationDictionary, propertyMap);
             if (counterLines == AMOUNT_LINES) {
                 counterLines = 0;
                 continue;
@@ -68,7 +72,7 @@ public class NGSParser {
 
     }
 
-    private String fixLine(String incorrectLine, String lineWithStationName, Map<String, List<Double>> mapOfStationCoord, Map<String, List<Double>> stationDictionary) {
+    private String fixLine(String incorrectLine, String lineWithStationName, Map<String, List<Double>> mapOfStationCoord, Map<String, List<Double>> stationDictionary, Map<String, Map<String, StationProperty>> propertyMap) {
         if (!(incorrectLine.contains("-999.000") || incorrectLine.contains("-99900.000"))) {
             return null;
         }
@@ -81,8 +85,8 @@ public class NGSParser {
         for (String s : nameStation) {
             List<Double> stationCoords = mapOfStationCoord.get(s);
             System.out.println(s + " " + stationCoords);
-            String theNearestStation = getTheNearestStationInThatDay(stationCoords, dateOfCrash, stationDictionary);
-            System.out.println(theNearestStation + " " + stationDictionary.get(theNearestStation));
+            String theNearestStation = getTheNearestStationInThatDay(stationCoords, dateOfCrash, stationDictionary, propertyMap);
+            System.out.println(theNearestStation + " " + stationDictionary.get(theNearestStation.split("\s+")[0]));
         }
 
         System.out.println("?????????");
@@ -91,20 +95,77 @@ public class NGSParser {
         return "nameStation";
     }
 
-    private String getTheNearestStationInThatDay(List<Double> stationCoords, String dateOfCrash, Map<String, List<Double>> stationDictionary) {
+    private String getTheNearestStationInThatDay(List<Double> stationCoords, String dateOfCrash, Map<String, List<Double>> stationDictionary, Map<String, Map<String, StationProperty>> propertyMap) {
 
-        String theNearestStation = null;
-        Double distance = 99999999999999999.0;
-        Map<String, StationProperty> stationPropertyMap = getStationPropertyMap();
+        try {
+            Date date = new SimpleDateFormat("yyyyMMdd").parse(dateOfCrash);
+//            System.out.println(new SimpleDateFormat("yyyyMMdd").format(date) + "####");
 
-        for (Map.Entry<String, List<Double>> meteoStation : stationDictionary.entrySet()) {
-            Double tmpDistnce = getDistance(stationCoords, meteoStation.getValue());
-            if (tmpDistnce < distance) {
-                theNearestStation = meteoStation.getKey();
-                distance = tmpDistnce;
+            String theResultNearestStation = null;
+            double resultDistance = 99999999999999999.0;
+//        Map<String, StationProperty> stationPropertyMap = getStationPropertyMap();
+
+            double resultResultT = StationProperty.invalidValue;
+
+            dateOfCrash = new SimpleDateFormat("yyyyMMdd").format(
+                    Date.from(LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()).minusDays(3).atZone(ZoneId.systemDefault()).toInstant())
+            );
+
+            for (int i = -3; i < 4; i++) {
+
+                String theNearestStation = null;
+                double distance = 99999999999999999.0;
+//        Map<String, StationProperty> stationPropertyMap = getStationPropertyMap();
+
+                double resultT = StationProperty.invalidValue;
+
+                for (Map.Entry<String, List<Double>> meteoStation : stationDictionary.entrySet()) {
+                    double tmpDistnce = getDistance(stationCoords, meteoStation.getValue());
+
+                    if (propertyMap.get(dateOfCrash).containsKey(meteoStation.getKey()) &&
+                            (propertyMap.get(dateOfCrash).get(meteoStation.getKey()).getTAVG() != StationProperty.invalidValue)) {
+                        if (tmpDistnce < distance) {
+                            theNearestStation = meteoStation.getKey();
+                            distance = tmpDistnce;
+                            resultT = propertyMap.get(dateOfCrash).get(meteoStation.getKey()).getTAVG() / 10.0;
+                        }
+                    } else {
+                        if (propertyMap.get(dateOfCrash).containsKey(meteoStation.getKey()) &&
+                                (propertyMap.get(dateOfCrash).get(meteoStation.getKey()).getTMIN() != StationProperty.invalidValue &&
+                                        propertyMap.get(dateOfCrash).get(meteoStation.getKey()).getTMAX() != StationProperty.invalidValue)) {
+                            if (tmpDistnce < distance) {
+                                theNearestStation = meteoStation.getKey();
+                                distance = tmpDistnce;
+                                resultT = (propertyMap.get(dateOfCrash).get(meteoStation.getKey()).getTMIN() / 10.0 +
+                                        propertyMap.get(dateOfCrash).get(meteoStation.getKey()).getTMAX() / 10.0) / 2.0;
+                            }
+                        }
+                    }
+                }
+
+                System.out.println("Date = " +dateOfCrash);
+                System.out.println("Distance = " + distance);
+                System.out.println("Tem = " + resultT);
+                System.out.println("Station name = " + theNearestStation);
+                if (resultDistance > distance) {
+                    theResultNearestStation = theNearestStation;
+                    resultDistance = distance;
+                    resultResultT = resultT;
+
+                }
+                dateOfCrash = new SimpleDateFormat("yyyyMMdd").format(
+                        Date.from(LocalDateTime.ofInstant(new SimpleDateFormat("yyyyMMdd").parse(dateOfCrash).toInstant(), ZoneId.systemDefault()).plusDays(1).atZone(ZoneId.systemDefault()).toInstant())
+                );
             }
+            System.out.println("------------");
+            return theResultNearestStation + "   " + resultResultT + " " + resultDistance;
+
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
-        return theNearestStation;
+
+        return null;
+
     }
 
     private Map<String, StationProperty> getStationPropertyMap() {
@@ -115,10 +176,10 @@ public class NGSParser {
         double deltaLat = Math.toRadians(meteoStationCoords.get(0) - stationCoords.get(0));
         double deltaLon = Math.toRadians(meteoStationCoords.get(1) - stationCoords.get(1));
 
-        double angle = Math.pow(Math.sin(deltaLat/2), 2) + Math.pow(Math.sin(deltaLon/2) , 2)
+        double angle = Math.pow(Math.sin(deltaLat / 2), 2) + Math.pow(Math.sin(deltaLon / 2), 2)
                 * Math.cos(Math.toRadians(stationCoords.get(0))) * Math.cos((Math.toRadians(meteoStationCoords.get(0))));
 
-        return 2 * Math.atan2(Math.sqrt(angle), Math.sqrt(1-angle));
+        return 2 * Math.atan2(Math.sqrt(angle), Math.sqrt(1 - angle));
     }
 
     private int getTypeError(String incorrectLine) {
@@ -181,50 +242,50 @@ public class NGSParser {
     }
 
     private String getDateOfCrash(String lineWithStationName) {
-        String dateOfCrash = lineWithStationName.split("\s+")[3] + lineWithStationName.split("\s+")[4] + lineWithStationName.split("\s+")[5];
-        return dateOfCrash;
+        return lineWithStationName.split("\s+")[3] + lineWithStationName.split("\s+")[4] + lineWithStationName.split("\s+")[5];
     }
 
-    public Map<String, List<StationProperty>> getStationPropertyMap(InputStream in) throws IOException {
+    public Map<String, Map<String, StationProperty>> getStationPropertyMap(InputStream in) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
-        Map<String, List<StationProperty>> result = new HashMap<>();
+        Map<String, Map<String, StationProperty>> result = new HashMap<>();
         String tmp = "";
+
+        Map<String, StationProperty> tmpPropertyMap = new HashMap<>();
+//        for (int i = 0; i < 5; i++) {
+//            tmp = reader.readLine();
+        String t = "";
         while ((tmp = reader.readLine()) != null) {
             String[] properties = tmp.split(",");
             if (!result.containsKey(properties[1])) {
-                List<StationProperty> tmpList = new ArrayList<>();
-                StationProperty stationProperty = new StationProperty(properties[0]);
-                setStationProperty(stationProperty, properties[3], properties[4]);
-                tmpList.add(stationProperty);
-                result.put(properties[1], tmpList);
+                StationProperty stationProperty = new StationProperty(properties[2], properties[3]);
+                tmpPropertyMap.put(properties[0], stationProperty);
+                result.put(properties[1], tmpPropertyMap);
             } else {
-                List<StationProperty> tmpList = result.get(properties[1]);
-                //boolean isContains = false;
-                StationProperty currentStationProperty = null;
-                //java stream api find
-                for (StationProperty stationProperty : tmpList) {
-                    if (stationProperty.getStationKey().equals(properties[0])) {
-                        //isContains = true;
-                        currentStationProperty = stationProperty;
-                        break;
-                    }
-                }
-
-                if (currentStationProperty == null) {
-                    StationProperty stationProperty = new StationProperty(properties[0]);
-                    setStationProperty(stationProperty, properties[3], properties[4]);
-                    tmpList.add(stationProperty);
-                    result.put(properties[1], tmpList);
+                if (!result.get(properties[1]).containsKey(properties[0])) {
+                    StationProperty stationProperty = new StationProperty();
+                    setStationProperty(stationProperty, properties[2], properties[3]);
+                    tmpPropertyMap.put(properties[0], stationProperty);
+                    result.put(properties[1], tmpPropertyMap);
                 } else {
-                    setStationProperty(currentStationProperty,  properties[3], properties[4]);
+                    setStationProperty(result.get(properties[1]).get(properties[0]), properties[2], properties[3]);
+                    tmpPropertyMap.put(properties[0], result.get(properties[1]).get(properties[0]));
+                    result.put(properties[1], tmpPropertyMap);
                 }
             }
+
+
+
+            if (!t.equals(properties[1])) {
+                t = properties[1];
+                tmpPropertyMap.clear();
+            }
+            //System.out.println(result);
         }
 
-        System.out.println(result);
+        //System.out.println(result + "!!!");
 
-        return  result;
+        return result;
     }
 
     private void setStationProperty(StationProperty stationProperty, String property, String value) {
@@ -234,4 +295,6 @@ public class NGSParser {
             case "TAVG" -> stationProperty.setTAVG(Double.parseDouble(value));
         }
     }
+
+
 }

@@ -12,12 +12,13 @@ public class Main {
         StationDictionary dictionary = new StationDictionary(stationInput);
         Map<String, List<Double>> stationDictionary = dictionary.getStationDictionary();
         stationInput.close();
-        System.out.println(stationDictionary.size());
+        //System.out.println(stationDictionary.size());
 
 
         NGSParser parser = new NGSParser(in);
-//        parser.fixNGSFile(stationDictionary);
-        Map<String, List<StationProperty>> propertyMap = parser.getStationPropertyMap(propertyInput);
+        Map<String, Map<String, StationProperty>> propertyMap = parser.getStationPropertyMap(propertyInput);
+        parser.fixNGSFile(stationDictionary, propertyMap);
+
         in.close();
     }
 
