@@ -1,3 +1,5 @@
+package alex;
+
 public class StationProperty {
     public static final double invalidValue = -2750.0;
     private double TMIN = invalidValue;
@@ -13,15 +15,6 @@ public class StationProperty {
             case "TAVG" -> this.TAVG = Double.parseDouble(value);
         }
     }
-//
-//
-//    public String getStationKey() {
-//        return stationKey;
-//    }
-
-//    public void setStationKey(String stationKey) {
-//        this.stationKey = stationKey;
-//    }
 
     static StationProperty createStationPropertyByTMIN(double TMIN) {
         StationProperty property = new StationProperty();
@@ -29,18 +22,6 @@ public class StationProperty {
 
         return property;
     }
-    /*static StationProperty createStationPropertyByTMAX(double TMAX) {
-        StationProperty property = new StationProperty();
-        property.setTMIN(TMAX);
-
-        return property;
-    }
-    static StationProperty createStationPropertyByTAVG(double TAVG) {
-        StationProperty property = new StationProperty();
-        property.setTAVG(TAVG);
-
-        return property;
-    }*/
     public double getTMIN() {
         return TMIN;
     }
