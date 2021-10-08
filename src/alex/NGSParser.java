@@ -33,7 +33,7 @@ public class NGSParser {
             writer.newLine();
             if (tmp.equals("$END")) {
                 counterEndMarker++;
-                System.out.println(counterEndMarker);
+//                System.out.println(counterEndMarker);
             }
         }
 
@@ -69,7 +69,7 @@ public class NGSParser {
         while ((lineWithStationName = reader.readLine()) != null) {
             writer.write(lineWithStationName);
             writer.newLine();
-            System.out.println(lineWithStationName);
+//            System.out.println(lineWithStationName);
             while (counterLines < AMOUNT_LINES && (tmp = reader.readLine()) != null
                     && !((tmp.contains("-999.000") || tmp.contains("-99900.000")))) {
                 writer.write(tmp);
@@ -85,7 +85,7 @@ public class NGSParser {
             writer.write(fix);
             writer.newLine();
 
-            System.out.println(tmp + "!!!!");
+//            System.out.println(tmp + "!!!!");
             writer.write(reader.readLine());
             writer.newLine();
             writer.write(reader.readLine());
@@ -100,7 +100,7 @@ public class NGSParser {
         }
 
         String dateOfCrash = getDateOfCrash(lineWithStationName);
-        System.out.println(dateOfCrash);
+//        System.out.println(dateOfCrash);
 
         int type = getTypeError(incorrectLine);
         //мб 1 станция или 2, в зависимости от ошибки
@@ -108,11 +108,11 @@ public class NGSParser {
 
         for (String name : nameStation) {
             String theNearestStation = getTheNearestStationInThatDay(name, mapOfStationCoord, dateOfCrash, stationDictionary, propertyMap);
-            System.out.println(theNearestStation + " " + stationDictionary.get(theNearestStation.split("\s+")[0]));
+//            System.out.println(theNearestStation + " " + stationDictionary.get(theNearestStation.split("\s+")[0]));
         }
 
 
-        System.out.println("?????????");
+//        System.out.println("?????????");
 
         String tail = incorrectLine.substring(10 * 6);
         StringBuilder incLine = new StringBuilder(incorrectLine);
@@ -127,7 +127,7 @@ public class NGSParser {
 
         incorrectLine = String.valueOf(incLine);
 
-        System.out.println("INCORRECT LINE   " + incorrectLine);
+//        System.out.println("INCORRECT LINE   " + incorrectLine);
         String[] values = incorrectLine.trim().split("\s+");
         StringBuilder builder = new StringBuilder();
 
@@ -154,7 +154,7 @@ public class NGSParser {
 
     private String getTheNearestStationInThatDay(String name, Map<String, List<Double>> mapOfStationCoord, String dateOfCrash, Map<String, List<Double>> stationDictionary, Map<String, Map<String, StationProperty>> propertyMap) {
         List<Double> stationCoords = mapOfStationCoord.get(name);
-        System.out.println(name + " " + stationCoords);
+//        System.out.println(name + " " + stationCoords);
 
         String theNearestStation = null;
         double distance = Double.MAX_VALUE;
@@ -185,7 +185,7 @@ public class NGSParser {
             }
         }
 
-        System.out.println("------------");
+//        System.out.println("------------");
         nearestStationTemperatureMap.put(name, resultT);
         nearestStationDistanceMap.put(name, distance);
         nearestStationKeyMap.put(name, theNearestStation);
@@ -268,7 +268,7 @@ public class NGSParser {
         }
         writer.write("$END");
         writer.newLine();
-        System.out.println(mapStationCoord);
+//        System.out.println(mapStationCoord);
         return mapStationCoord;
     }
 
